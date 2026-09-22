@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clínica Dental Keralty — Pendientes por Facturar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script>
+  // Fallback por si el CDN de datalabels falla
+  if (typeof ChartDataLabels === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"><\/script>');
+  }
+</script>
+<style>
+  :root {
+    --bg: #F5F3EC;
+    --bg-panel: #FFFFFF;
+    --bg-soft: #EFEDE4;
+    --ink: #1B2E2B;
+    --ink-soft: #5B6E69;
+    --teal: #16544C;
+    --teal-deep: #0E3B35;
+    --amber: #C97A2E;
+    --amber-soft: #F2E1C8;
+    --coral: #B4483A;
+    --line: #DCD6C6;
+    --shadow: 0 1px 0 rgba(27,46,43,0.06);
+    --shadow-md: 0 4px 16px rgba(27,46,43,0.08);
+    --radius: 10px;
+    --excel: #217346;
+    --keralty-blue: #0033A0;
+    --keralty-green: #00A94F;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #10201D;
+      --bg-panel: #16302B;
+      --bg-soft: #1B3833;
+      --ink: #EDEAE0;
+      --ink-soft: #A9BBB6;
+      --teal: #5FBBA9;
+      --teal-deep: #86D6C4;
+      --amber: #E3A15C;
+      --amber-soft: #3A3122;
+      --coral: #E08776;
+      --line: #2A423C;
+      --shadow: 0 1px 0 rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+      --excel: #4CAF7A;
+      --keralty-blue: #4A78D6;
+      --keralty-green: #34C77B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10201D;
+    --bg-panel: #16302B;
+    --bg-soft: #1B3833;
+    --ink: #EDEAE0;
+    --ink-soft: #A9BBB6;
+    --teal: #5FBBA9;
+    --teal-deep: #86D6C4;
+    --amber: #E3A15C;
+    --amber-soft: #3A3122;
+    --coral: #E08776;
+    --line: #2A423C;
+    --shadow: 0 1px 0 rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+    --excel: #4CAF7A;
+    --keralty-blue: #4A78D6;
+    --keralty-green: #34C77B;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 100%;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  header.hero {
+    display: flex; flex-wrap: wrap; gap: 32px;
+    align-items: flex-end; justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px; margin-bottom: 32px;
+  }
+  .brand-block { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .keralty-logo {
+    width: 72px; height: 72px; border-radius: 16px;
+    background: linear-gradient(135deg, var(--keralty-blue) 0%, var(--keralty-green) 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; box-shadow: 0 6px 18px rgba(0,51,160,0.18);
+    position: relative; overflow: hidden;
+  }
+  .keralty-logo::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25), transparent 60%);
+    pointer-events: none;
+  }
+  .keralty-logo svg { display: block; position: relative; z-index: 1; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+  .brand-text .brand-name {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 22px;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+  .brand-text .brand-tag {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--keralty-blue); letter-spacing: 0.06em;
+    text-transform: uppercase; margin-top: 4px; font-weight: 500;
+  }
+
+  .hero-text { max-width: 620px; }
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    color: var(--teal); letter-spacing: 0.02em; margin: 0 0 10px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: clamp(30px, 4.2vw, 44px);
+    line-height: 1.08; margin: 0 0 12px; color: var(--ink);
+  }
+  .hero-sub { color: var(--ink-soft); font-size: 16px; line-height: 1.55; margin: 0; }
+
+  .actions-col { display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
+
+  .uploader {
+    background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--shadow);
+  }
+  .uploader .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--coral); flex-shrink: 0;
+  }
+  .uploader.ready .dot { background: var(--keralty-green); }
+  .uploader.loading .dot { background: var(--amber); animation: pulse 1s infinite; }
+  .uploader-info { flex: 1; min-width: 0; }
+  .uploader-info .label { font-size: 12.5px; color: var(--ink-soft); }
+  .uploader-info .filename {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--ink);
+  }
+
+  .btn-upload {
+    background: var(--teal); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 7px;
+    font-family: 'IBM Plex Sans', sans-serif; font-weight: 600;
+    font-size: 13.5px; cursor: pointer; white-space: nowrap;
+    transition: background 0.15s ease, transform 0.1s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-upload:hover { background: var(--teal-deep); }
+  .btn-upload:active { transform: translateY(1px); }
+  .btn-upload:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+  .excel-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 4px;
+    background: var(--excel); flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+  }
+  .excel-badge svg { display: block; }
+
+  .btn-csv {
+    background: var(--bg-panel); color: var(--ink);
+    border: 1px solid var(--line); padding: 11px 16px;
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Sans', sans-serif; font-weight: 600;
+    font-size: 13.5px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    justify-content: flex-start; box-shadow: var(--shadow);
+    transition: border-color 0.15s ease, background 0.15s ease;
+    text-align: left;
+  }
+  .btn-csv:hover:not(:disabled) { border-color: var(--teal); }
+  .btn-csv:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-csv .csv-meta { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .btn-csv .csv-meta .t1 { font-size: 13px; color: var(--ink); }
+  .btn-csv .csv-meta .t2 {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--ink-soft); font-weight: 500;
+  }
+
+  .btn-clear-storage {
+    background: transparent; color: var(--ink-soft);
+    border: 1px dashed var(--line); padding: 8px 14px;
+    border-radius: 7px; font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500; font-size: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; transition: all 0.15s ease; width: 100%;
+  }
+  .btn-clear-storage:hover { color: var(--coral); border-color: var(--coral); border-style: solid; }
+  .btn-clear-storage:disabled { display: none; }
+
+  .stamp {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--ink-soft); display: inline-flex;
+    align-items: center; gap: 6px; padding-left: 4px;
+  }
+  .stamp .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--keralty-green);
+    box-shadow: 0 0 0 0 rgba(0,169,79,0.5);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .stamp .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(0,169,79,0.45); }
+      70%  { box-shadow: 0 0 0 7px rgba(0,169,79,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,169,79,0); }
+    }
+  }
+
+  input[type="file"] { display: none; }
+
+  .progress-wrap {
+    display: none;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .progress-wrap.active { display: block; }
+  .progress-head {
+    display: flex; justify-content: space-between;
+    align-items: center; gap: 12px;
+    margin-bottom: 10px; font-size: 12.5px;
+  }
+  .progress-head .title { color: var(--ink); font-weight: 600; }
+  .progress-head .stats {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink-soft); font-size: 11.5px;
+  }
+  .progress-track {
+    width: 100%; height: 8px;
+    background: var(--bg-soft);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--keralty-blue), var(--keralty-green));
+    border-radius: 4px;
+    transition: width 0.25s ease;
+  }
+  .progress-note {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .empty {
+    margin-top: 60px; text-align: center;
+    padding: 70px 20px; border: 1px dashed var(--line);
+    border-radius: var(--radius); color: var(--ink-soft);
+  }
+  .empty svg { opacity: 0.5; margin-bottom: 14px; }
+  .empty p { margin: 4px 0; font-size: 15px; }
+  .empty .cols {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    margin-top: 14px; color: var(--teal);
+  }
+
+  #content { display: none; }
+
+  .filters-bar {
+    background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 16px 18px;
+    margin-bottom: 20px; box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px 16px; align-items: end;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .filter-field label {
+    font-size: 11.5px; color: var(--ink-soft);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .filter-field select {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--bg-panel);
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 8px 30px 8px 10px; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M2.5 4.5L6 8l3.5-3.5' stroke='%235B6E69' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 9px center;
+    transition: border-color 0.15s ease; width: 100%;
+    text-overflow: ellipsis;
+  }
+  .filter-field select:hover { border-color: var(--teal); }
+  .filter-field select:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+  .filters-actions { display: flex; gap: 8px; align-items: center; grid-column: span 1; }
+  .btn-filter {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px; font-weight: 600;
+    padding: 8px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--bg-panel);
+    color: var(--ink-soft); cursor: pointer;
+    transition: all 0.15s ease; white-space: nowrap;
+  }
+  .btn-filter:hover { border-color: var(--teal); color: var(--teal); }
+
+  .filters-summary {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--ink-soft); margin: -8px 0 20px;
+    padding: 0 4px; display: flex; flex-wrap: wrap;
+    gap: 8px; align-items: center; min-height: 18px;
+  }
+  .filters-summary .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--amber-soft); color: var(--amber);
+    padding: 3px 9px; border-radius: 20px; font-weight: 600;
+  }
+  .filters-summary .chip button {
+    background: none; border: none; color: inherit; cursor: pointer;
+    font-size: 13px; line-height: 1; padding: 0;
+    margin-left: 2px; opacity: 0.7;
+  }
+  .filters-summary .chip button:hover { opacity: 1; }
+
+  .analyst-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+  }
+  .analyst-panel::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--keralty-blue), var(--keralty-green));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .analyst-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  }
+  .analyst-title {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 16px; color: var(--ink);
+  }
+  .analyst-title .badge-analyst {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--keralty-blue), var(--keralty-green));
+    color: #fff; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .btn-analyst-reset {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--bg-panel);
+    color: var(--ink-soft); cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-analyst-reset:hover { border-color: var(--teal); color: var(--teal); }
+
+  .analyst-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px 22px;
+  }
+  .analyst-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .analyst-field > label {
+    font-size: 11.5px; color: var(--ink-soft);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .seg {
+    display: flex; gap: 3px; background: var(--bg-soft);
+    padding: 3px; border-radius: 8px; flex-wrap: wrap;
+  }
+  .seg button {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px;
+    font-weight: 600; padding: 6px 12px; border: none;
+    background: transparent; color: var(--ink-soft);
+    border-radius: 6px; cursor: pointer;
+    transition: all 0.15s ease; white-space: nowrap;
+    flex: 1; min-width: 0;
+  }
+  .seg button:hover { color: var(--ink); }
+  .seg button.active {
+    background: var(--bg-panel); color: var(--teal);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 1px rgba(0,0,0,0.04);
+  }
+
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 4px 0;
+  }
+  .switch-label { font-size: 12.5px; font-weight: 500; color: var(--ink); }
+  .switch {
+    position: relative; display: inline-block;
+    width: 42px; height: 24px; flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--line); transition: 0.25s;
+    border-radius: 24px;
+  }
+  .switch .slider::before {
+    content: ''; position: absolute;
+    height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background: #fff; transition: 0.25s; border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .slider {
+    background: linear-gradient(135deg, var(--keralty-blue), var(--keralty-green));
+  }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 36px;
+  }
+  .kpi { background: var(--bg-panel); padding: 22px 20px; }
+  .kpi .kpi-label { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 8px; }
+  .kpi .kpi-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 600; font-size: 28px; line-height: 1.1;
+  }
+  .kpi.warn .kpi-value { color: var(--coral); }
+  .kpi .kpi-sub { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+
+  .section { margin-bottom: 40px; }
+  .section-head {
+    display: flex; justify-content: space-between;
+    align-items: baseline; gap: 12px; margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 21px; font-weight: 600; margin: 0;
+  }
+  .section-head .note {
+    font-size: 13px; color: var(--ink-soft);
+    max-width: 420px; text-align: right;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .chart-box { position: relative; height: 340px; padding-right: 4px; }
+  .chart-box.tall { height: 480px; }
+  .chart-box.doughnut { height: 340px; }
+  .chart-box canvas { max-width: 100%; }
+
+  .legend-row { display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-soft); }
+  .legend-swatch { width: 11px; height: 11px; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left; font-weight: 600; color: var(--ink-soft);
+    font-size: 12px; padding: 0 12px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  thead th.num { text-align: right; }
+  tbody td { padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px; white-space: nowrap; }
+  td.cause-tag {
+    display: inline-block; font-size: 11.5px;
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--amber-soft); color: var(--amber); font-weight: 600;
+  }
+  .table-wrap { overflow-x: auto; }
+
+  footer {
+    margin-top: 50px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft); font-size: 12.5px;
+    display: flex; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+  }
+  footer .left { display: flex; flex-direction: column; gap: 6px; }
+  footer .right {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; max-width: 55%; text-align: right;
+  }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: var(--bg-panel);
+    padding: 12px 20px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    z-index: 9999; opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    display: inline-flex; align-items: center; gap: 10px;
+    max-width: 90vw; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast .tick {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--keralty-green);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #content.enter { animation: rise 0.4s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  }
+
+  @media (max-width: 700px) {
+    .brand-block { gap: 12px; }
+    .keralty-logo { width: 56px; height: 56px; border-radius: 12px; }
+    .brand-text .brand-name { font-size: 18px; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .chart-box.tall { height: 400px; }
+    .analyst-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-text">
+      <div class="brand-block">
+        <div class="keralty-logo" aria-label="Clínica Dental Keralty">
+          <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 6c-6 0-9 3-13 3s-9-2-11 4c-2 5 1 12 4 18 3 7 4 12 5 18 .5 3 2 5 4 5 3 0 3-4 4-9 .5-3 1.5-5 4-5s3.5 2 4 5c1 5 1 9 4 9 2 0 3.5-2 4-5 1-6 2-11 5-18 3-6 6-13 4-18-2-6-7-4-11-4s-7-3-13-3z"
+                  fill="#ffffff" opacity="0.96"/>
+            <path d="M29 22h6v6h6v6h-6v6h-6v-6h-6v-6h6z" fill="#0033A0"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Clínica Dental Keralty</span>
+          <span class="brand-tag">Control de Facturación</span>
+        </div>
+      </div>
+
+      <p class="kicker">CONSOLIDADO · ANÁLISIS DE PENDIENTES</p>
+      <h1>Pendientes por facturar</h1>
+      <p class="hero-sub">Sube el Excel y ajusta el análisis con los botones. Procesa archivos grandes (+500.000 filas) con streaming y Web Worker.</p>
+    </div>
+
+    <div class="actions-col">
+      <div class="uploader" id="uploaderBox">
+        <div class="dot" id="uploaderDot"></div>
+        <div class="uploader-info">
+          <div class="label" id="uploaderLabel">Ningún archivo cargado</div>
+          <div class="filename" id="uploaderFile">&nbsp;</div>
+        </div>
+        <label class="btn-upload" for="fileInput">
+          <span class="excel-badge" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="0.5" y="0.5" width="13" height="13" rx="2" fill="#217346"/>
+              <path d="M3.2 3.5h3.1L7.5 6l1.2-2.5h3.1L9.4 7l2.4 3.5H8.7L7.5 8 6.3 10.5H3.2L5.6 7 3.2 3.5z" fill="#fff"/>
+            </svg>
+          </span>
+          Subir Excel
+        </label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      </div>
+
+      <button class="btn-csv" id="btnCsv" type="button" disabled>
+        <span class="excel-badge" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v7m0 0l-2.5-2.5M7 8l2.5-2.5" stroke="#217346" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 9.5v1.5A1.5 1.5 0 003.5 12.5h7A1.5 1.5 0 0012 11V9.5" stroke="#217346" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="csv-meta">
+          <span class="t1">Descargar detalle CSV</span>
+          <span class="t2" id="csvSub">Sin datos cargados</span>
+        </span>
+      </button>
+
+      <button class="btn-clear-storage" id="btnClearStorage" type="button" disabled>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2 3h8M4.5 3V2h3v1M3 3l.5 7h5L9 3M5 5v4M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Limpiar datos guardados
+      </button>
+
+      <div class="stamp" id="stamp" title="Fecha y hora de la última actualización">
+        <span class="pulse" aria-hidden="true"></span>
+        <span id="stampText">Sin actualizar</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-head">
+      <span class="title" id="progressTitle">Procesando archivo…</span>
+      <span class="stats" id="progressStats">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-note" id="progressNote">Leyendo…</div>
+  </div>
+
+  <div class="empty" id="emptyState">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    <p>Esperando el archivo para generar el análisis.</p>
+    <p>Acepta Excel de cualquier tamaño — procesa por streaming.</p>
+    <p class="cols">OBSERVACIONES · SUCURSAL · MES · VALOR_TOTAL · TERCERO</p>
+  </div>
+
+  <div id="content">
+
+    <div class="filters-bar" id="filtersBar">
+      <div class="filter-field">
+        <label for="fSucursal">Sucursal</label>
+        <select id="fSucursal"><option value="">Todas</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="fMes">Mes</label>
+        <select id="fMes"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="fTercero">Tercero</label>
+        <select id="fTercero"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="fCausa">Causa / Observación</label>
+        <select id="fCausa"><option value="">Todas</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="fTipo">Tipo de caso</label>
+        <select id="fTipo">
+          <option value="">Todos</option>
+          <option value="normal">Flujo normal</option>
+          <option value="issue">Con causa / error</option>
+          <option value="sinobs">Sin observación</option>
+        </select>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-filter" id="btnClear" type="button">Limpiar filtros</button>
+      </div>
+    </div>
+
+    <div class="filters-summary" id="filtersSummary"></div>
+
+    <div class="analyst-panel" id="analystPanel">
+      <div class="analyst-head">
+        <div class="analyst-title">
+          <span>🎛️ Personaliza el análisis</span>
+          <span class="badge-analyst">Live</span>
+        </div>
+        <div class="analyst-actions">
+          <button class="btn-analyst-reset" id="btnResetAnalyst" type="button">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M10.5 6a4.5 4.5 0 11-1.3-3.2M10.5 1.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Restaurar vista por defecto
+          </button>
+        </div>
+      </div>
+
+      <div class="analyst-grid">
+        <div class="analyst-field">
+          <label>Agrupar por</label>
+          <div class="seg" id="segDimension">
+            <button type="button" data-val="sucursal" class="active">Sucursal</button>
+            <button type="button" data-val="mes">Mes</button>
+            <button type="button" data-val="tercero">Tercero</button>
+            <button type="button" data-val="obs">Causa</button>
+            <button type="button" data-val="tipo">Tipo</button>
+          </div>
+        </div>
+
+        <div class="analyst-field">
+          <label>Métrica</label>
+          <div class="seg" id="segMetric">
+            <button type="button" data-val="valor" class="active">Valor ($)</button>
+            <button type="button" data-val="casos">Casos (#)</button>
+          </div>
+        </div>
+
+        <div class="analyst-field">
+          <label>Tipo de gráfico</label>
+          <div class="seg" id="segChart">
+            <button type="button" data-val="bar" class="active">Barras</button>
+            <button type="button" data-val="barStacked">Apiladas</button>
+            <button type="button" data-val="doughnut">Dona</button>
+          </div>
+        </div>
+
+        <div class="analyst-field">
+          <label>Top de resultados</label>
+          <div class="seg" id="segTopN">
+            <button type="button" data-val="5">5</button>
+            <button type="button" data-val="10" class="active">10</button>
+            <button type="button" data-val="15">15</button>
+            <button type="button" data-val="20">20</button>
+            <button type="button" data-val="all">Todo</button>
+          </div>
+        </div>
+
+        <div class="analyst-field">
+          <label>Opciones de vista</label>
+          <div class="switch-row">
+            <span class="switch-label">Etiquetas de datos</span>
+            <label class="switch">
+              <input type="checkbox" id="swLabels" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="switch-row">
+            <span class="switch-label">Barras horizontales</span>
+            <label class="switch">
+              <input type="checkbox" id="swHorizontal" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpiRow"></div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2 id="mainChartTitle">Valor pendiente por sucursal</h2>
+        <div class="note" id="mainChartNote">Ajusta los controles de arriba para cambiar la vista.</div>
+      </div>
+      <div class="panel">
+        <div class="chart-box tall" id="mainChartBox"><canvas id="chartMain"></canvas></div>
+        <div class="legend-row" id="mainLegendRow">
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--teal)"></span>Flujo normal</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--coral)"></span>Con causa de admisión / error</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section grid-2">
+      <div class="panel">
+        <div class="section-head" style="margin-bottom:14px;"><h2>Causas registradas</h2></div>
+        <div class="chart-box"><canvas id="chartCausas"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="section-head" style="margin-bottom:14px;"><h2>Valor por tercero</h2></div>
+        <div class="chart-box doughnut"><canvas id="chartTercero"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Distribución por mes</h2>
+      </div>
+      <div class="panel">
+        <div class="chart-box"><canvas id="chartMes"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Casos con causa de admisión o error, por sucursal</h2>
+        <div class="note">Para socializar puntualmente con el negocio — ordenado de mayor a menor valor.</div>
+      </div>
+      <div class="panel table-wrap">
+        <table>
+          <thead>
+            <tr><th>Sucursal</th><th>Causa</th><th>Tercero</th><th class="num">Casos</th><th class="num">Valor pendiente</th></tr>
+          </thead>
+          <tbody id="issueTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <div class="left">
+        <span id="footNote">—</span>
+        <span id="stampFoot" style="font-size:12px;">Última actualización: —</span>
+      </div>
+      <span id="colNote" class="right">—</span>
+    </footer>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="tick" aria-hidden="true">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path d="M1.5 5.2l2.2 2.2 4.8-5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </span>
+  <span id="toastMsg">Listo</span>
+</div>
+
+<script>
+const STORAGE_LIMITS = {
+  MAX_CSV_ROWS_KEPT: 100000,
+  AGGREGATES_ONLY_THRESHOLD: 50000,
+  BATCH_SIZE: 20000
+};
+</script>
+
+<!-- ============================================================
+     WEB WORKER INLINE
+     ============================================================ -->
+<script id="workerSheet" type="javascript/worker">
+let done = false;
+function finish(payload) {
+  if (done) return;
+  done = true;
+  self.postMessage(payload);
+}
+
+self.onmessage = function (e) {
+  const { fileBuffer, chunkSize } = e.data;
+
+  const guard = setTimeout(() => {
+    finish({ type: 'error', error: 'Timeout al procesar (worker bloqueado)' });
+  }, 30000);
+
+  try {
+    if (typeof XLSX === 'undefined') {
+      try {
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      } catch (impErr) {
+        clearTimeout(guard);
+        finish({ type: 'error', error: 'No se pudo cargar XLSX en worker: ' + impErr.message });
+        return;
+      }
+    }
+    if (typeof XLSX === 'undefined') {
+      clearTimeout(guard);
+      finish({ type: 'error', error: 'XLSX no está definido tras importScripts' });
+      return;
+    }
+
+    const data = new Uint8Array(fileBuffer);
+    const wb = XLSX.read(data, { type: 'array' });
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+
+    if (!sheet || !sheet['!ref']) {
+      clearTimeout(guard);
+      finish({ type: 'error', error: 'Hoja vacía o sin rango' });
+      return;
+    }
+
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    const nRows = range.e.r - range.s.r + 1;
+    const nCols = range.e.c - range.s.c + 1;
+
+    const headers = [];
+    for (let c = 0; c < nCols; c++) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: range.s.r, c: range.s.c + c })];
+      headers.push(cell ? String(cell.v).trim() : ('COL_' + c));
+    }
+
+    clearTimeout(guard);
+
+    self.postMessage({ type: 'meta', headers, totalRows: nRows - 1, nCols });
+
+    let batch = [];
+    for (let r = range.s.r + 1; r <= range.e.r; r++) {
+      const row = {};
+      for (let c = 0; c < nCols; c++) {
+        const cell = sheet[XLSX.utils.encode_cell({ r, c: range.s.c + c })];
+        row[headers[c]] = cell ? cell.v : null;
+      }
+      batch.push(row);
+
+      if (batch.length >= chunkSize) {
+        self.postMessage({ type: 'chunk', rows: batch, processed: r - range.s.r });
+        batch = [];
+      }
+    }
+    if (batch.length) {
+      self.postMessage({ type: 'chunk', rows: batch, processed: range.e.r - range.s.r });
+    }
+
+    self.postMessage({ type: 'done' });
+
+  } catch (err) {
+    clearTimeout(guard);
+    finish({ type: 'error', error: err && err.message ? err.message : String(err) });
+  }
+};
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  const state = {
+    aggregates: null,
+    rawSample: [],
+    rawSampleTotal: 0,
+    columns: [],
+    filename: '',
+    loadedAt: null,
+    totalRows: 0,
+    truncated: false
+  };
+
+  function getCss(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  const COLORS = {
+    teal: getCss('--teal'), coral: getCss('--coral'), amber: getCss('--amber'),
+    ink: getCss('--ink'), inkSoft: getCss('--ink-soft'), line: getCss('--line'),
+    panel: getCss('--bg-panel')
+  };
+
+  const PALETTE = ['#16544C', '#C97A2E', '#B4483A', '#5B8A82', '#D8B36A', '#7A5C3E', '#3E6E63', '#9C6B4E', '#7AA095', '#A56B4C'];
+
+  const fileInput      = document.getElementById('fileInput');
+  const uploaderBox    = document.getElementById('uploaderBox');
+  const uploaderLabel  = document.getElementById('uploaderLabel');
+  const uploaderFile   = document.getElementById('uploaderFile');
+  const emptyState     = document.getElementById('emptyState');
+  const content        = document.getElementById('content');
+  const footNote       = document.getElementById('footNote');
+  const colNote        = document.getElementById('colNote');
+  const btnCsv         = document.getElementById('btnCsv');
+  const csvSub         = document.getElementById('csvSub');
+  const stampText      = document.getElementById('stampText');
+  const stampFoot      = document.getElementById('stampFoot');
+  const toast          = document.getElementById('toast');
+  const toastMsg       = document.getElementById('toastMsg');
+  const btnClearStorage = document.getElementById('btnClearStorage');
+  const progressWrap   = document.getElementById('progressWrap');
+  const progressTitle  = document.getElementById('progressTitle');
+  const progressStats  = document.getElementById('progressStats');
+  const progressFill   = document.getElementById('progressFill');
+  const progressNote   = document.getElementById('progressNote');
+
+  const fSucursal = document.getElementById('fSucursal');
+  const fMes      = document.getElementById('fMes');
+  const fTercero  = document.getElementById('fTercero');
+  const fCausa    = document.getElementById('fCausa');
+  const fTipo     = document.getElementById('fTipo');
+  const btnClear  = document.getElementById('btnClear');
+  const filtersSummary = document.getElementById('filtersSummary');
+
+  const segDimension = document.getElementById('segDimension');
+  const segMetric    = document.getElementById('segMetric');
+  const segChart     = document.getElementById('segChart');
+  const segTopN      = document.getElementById('segTopN');
+  const swLabels     = document.getElementById('swLabels');
+  const swHorizontal = document.getElementById('swHorizontal');
+  const btnResetAnalyst = document.getElementById('btnResetAnalyst');
+  const mainChartTitle = document.getElementById('mainChartTitle');
+  const mainChartNote  = document.getElementById('mainChartNote');
+  const mainLegendRow  = document.getElementById('mainLegendRow');
+
+  const DEFAULT_CFG = {
+    dimension: 'sucursal',
+    metric: 'valor',
+    chart: 'bar',
+    topN: '10',
+    labels: true,
+    horizontal: true
+  };
+  const cfg = { ...DEFAULT_CFG };
+
+  let charts = {};
+
+  /* =========================================================
+     INDEXEDDB
+     ========================================================= */
+  const DB_NAME = 'keralty_dashboard';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'state';
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function dbSet(key, value) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function dbGet(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function dbClear() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function saveStateToIDB() {
+    try {
+      await dbSet('dashboardState', {
+        aggregates: state.aggregates,
+        rawSample: state.rawSample,
+        rawSampleTotal: state.rawSampleTotal,
+        columns: state.columns,
+        filename: state.filename,
+        loadedAt: state.loadedAt ? state.loadedAt.toISOString() : null,
+        totalRows: state.totalRows,
+        truncated: state.truncated
+      });
+      btnClearStorage.disabled = false;
+    } catch (e) {
+      console.warn('No se pudo guardar en IndexedDB:', e);
+    }
+  }
+  async function loadStateFromIDB() {
+    try {
+      const data = await dbGet('dashboardState');
+      if (!data || !data.aggregates) return null;
+      data.loadedAt = data.loadedAt ? new Date(data.loadedAt) : new Date();
+      return data;
+    } catch (e) { return null; }
+  }
+
+  /* =========================================================
+     FECHA / TOAST / PROGRESO
+     ========================================================= */
+  function fmtDateTime(d) {
+    if (!d) return '—';
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function setStamp(date) {
+    const txt = fmtDateTime(date);
+    stampText.textContent = 'Actualizado: ' + txt;
+    stampFoot.textContent = 'Última actualización: ' + txt;
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    toastMsg.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  function showProgress(title, pct, note) {
+    progressWrap.classList.add('active');
+    progressTitle.textContent = title;
+    progressFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    progressStats.textContent = Math.round(pct) + '%';
+    progressNote.textContent = note || '';
+  }
+  function hideProgress() {
+    progressWrap.classList.remove('active');
+    progressFill.style.width = '0%';
+  }
+
+  /* =========================================================
+     DETECCIÓN DE COLUMNAS
+     ========================================================= */
+  function norm(s) {
+    return String(s).toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\s_\-\.]+/g, '').trim();
+  }
+  const FIELD_DEFS = {
+    valor: {
+      exact: ['VALORTOTAL','VALOR TOTAL','TOTAL','VALORPENDIENTE','VALORNETO','IMPORTE','MONTO','VLR','VR','VALOR'],
+      contains: ['VALORTOTAL','VALORPENDIENTE','VALORNETO','TOTALPENDIENTE','IMPORTE','MONTO','VALOR','VLR','VR'],
+      exclude: ['VALORUNITARIO','VALORIVA','VALORCOPAGO','VALORCUOTA','VALORPAGADO','VALORFACTURADO','VALORGLOSA']
+    },
+    sucursal: {
+      exact: ['SUCURSAL','SEDE','CENTRO','CLINICA','PUNTO','LOCAL','CIUDAD'],
+      contains: ['SUCURSAL','SEDE','CLINICA','CENTRO','PUNTOATENCION','PUNTO','LOCAL'],
+      exclude: ['CODIGOSUCURSAL','IDSUCURSAL','CODSUCURSAL','NITSUCURSAL']
+    },
+    mes: {
+      exact: ['MES','MESFACTURACION','PERIODO','MESCONTABLE','MESPROCESO'],
+      contains: ['MES','PERIODO','FECHA','FECHAPRESTACION','FECHAFACTURA'],
+      exclude: ['MESES','MENSUAL']
+    },
+    tercero: {
+      exact: ['TERCERO','TERCEROS','PROVEEDOR','CLIENTE','PACIENTE','ENTIDAD','EPS','ASEGURADORA','NIT'],
+      contains: ['TERCERO','PROVEEDOR','CLIENTE','PACIENTE','ENTIDAD','EPS','ASEGURADORA','NIT','RAZONSOCIAL'],
+      exclude: ['TIPOTERCERO','CODIGOTERCERO','IDTERCERO','NITTERCERO']
+    },
+    observaciones: {
+      exact: ['OBSERVACIONES','OBSERVACION','OBS','CAUSA','MOTIVO','DETALLE','DESCRIPCION','NOTA','CONCEPTO','ESTADO'],
+      contains: ['OBSERV','CAUSA','MOTIVO','DETALLE','DESCRIP','NOTA','CONCEPTO','ESTADO','RAZON'],
+      exclude: ['OBSERVACIONESADICIONALES','ESTADOFACTURA']
+    }
+  };
+  function detectColumns(headers) {
+    const normalized = headers.map(k => ({ original: k, n: norm(k) }));
+    const taken = new Set();
+    const map = {};
+    const log = [];
+    for (const [field, def] of Object.entries(FIELD_DEFS)) {
+      for (const ex of def.exact) {
+        const hit = normalized.find(x => x.n === norm(ex) && !taken.has(x.original));
+        if (hit) { map[field] = hit.original; taken.add(hit.original); log.push({ field, col: hit.original }); break; }
+      }
+    }
+    for (const [field, def] of Object.entries(FIELD_DEFS)) {
+      if (map[field]) continue;
+      const excludes = (def.exclude || []).map(norm);
+      const hit = normalized.find(x => {
+        if (taken.has(x.original)) return false;
+        if (excludes.some(e => x.n.includes(e))) return false;
+        return (def.contains || []).some(c => x.n.includes(norm(c)));
+      });
+      if (hit) { map[field] = hit.original; taken.add(hit.original); log.push({ field, col: hit.original }); }
+    }
+    return { map, log, allKeys: headers };
+  }
+
+  /* =========================================================
+     AGREGADOS
+     ========================================================= */
+  function initAggregates() {
+    return {
+      totalValor: 0,
+      totalCasos: 0,
+      issueValor: 0,
+      issueCasos: 0,
+      bySucursal: {},
+      byMes: {},
+      byTercero: {},
+      byObs: {},
+      byTipo: {},
+      issueTable: {},
+      uniqSucursal: {},
+      uniqMes: {},
+      uniqTercero: {},
+      uniqCausa: {}
+    };
+  }
+
+  function accumulateRow(agg, row, map) {
+    const kSuc = map.sucursal, kMes = map.mes, kTer = map.tercero, kObs = map.observaciones, kVal = map.valor;
+    const suc = kSuc ? String(row[kSuc] || 'Sin sucursal').trim() : 'Sin sucursal';
+    const mes = kMes ? String(row[kMes] || 'Sin mes').trim() : 'Sin mes';
+    const ter = kTer ? String(row[kTer] || 'Sin tercero').trim() : 'Sin tercero';
+    const obs = kObs ? String(row[kObs] || '').trim() : '';
+    const valor = Number(row[kVal]) || 0;
+    const isIssue = obs && !/^\s*para facturar/i.test(obs);
+    const isNormal = obs && !isIssue;
+
+    if (valor === 0 && suc === 'Sin sucursal') return;
+
+    agg.totalValor += valor;
+    agg.totalCasos += 1;
+    if (isIssue) { agg.issueValor += valor; agg.issueCasos += 1; }
+
+    const bump = (obj, key) => {
+      if (!obj[key]) obj[key] = { normal: 0, issue: 0, normalCasos: 0, issueCasos: 0 };
+      const g = obj[key];
+      if (isIssue) { g.issue += valor; g.issueCasos += 1; }
+      else { g.normal += valor; g.normalCasos += 1; }
+    };
+    bump(agg.bySucursal, suc);
+    bump(agg.byMes, mes);
+    bump(agg.byTercero, ter);
+    bump(agg.byObs, obs || '(sin observación)');
+
+    const tipoKey = isIssue ? 'Con causa / error' : (isNormal ? 'Flujo normal' : 'Sin observación');
+    if (!agg.byTipo[tipoKey]) agg.byTipo[tipoKey] = { normal: 0, issue: 0, normalCasos: 0, issueCasos: 0 };
+    const gt = agg.byTipo[tipoKey];
+    gt.normal += valor; gt.normalCasos += 1;
+
+    agg.uniqSucursal[suc] = 1;
+    agg.uniqMes[mes] = 1;
+    agg.uniqTercero[ter] = 1;
+    if (obs) agg.uniqCausa[obs] = 1;
+
+    if (isIssue) {
+      const tkey = suc + '||' + obs + '||' + ter;
+      if (!agg.issueTable[tkey]) agg.issueTable[tkey] = { sucursal: suc, obs, tercero: ter, valor: 0, casos: 0 };
+      agg.issueTable[tkey].valor += valor;
+      agg.issueTable[tkey].casos += 1;
+    }
+  }
+
+  /* =========================================================
+     CARGA
+     ========================================================= */
+  fileInput.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    uploaderLabel.textContent = 'Procesando…';
+    uploaderFile.textContent = file.name;
+    uploaderBox.classList.add('loading');
+    showProgress('Leyendo archivo…', 0, `Tamaño: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      try { processBuffer(ev.target.result, file.name); }
+      catch (err) {
+        console.error(err);
+        uploaderBox.classList.remove('loading');
+        hideProgress();
+        showUploadError('Error procesando', String(err.message || err));
+      }
+    };
+    reader.onerror = function () {
+      uploaderBox.classList.remove('loading');
+      hideProgress();
+      showUploadError('Error leyendo el archivo', 'Intenta de nuevo.');
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function processBuffer(buffer, filename) {
+    let worker;
+    try {
+      const blob = new Blob([document.getElementById('workerSheet').textContent], { type: 'application/javascript' });
+      worker = new Worker(URL.createObjectURL(blob));
+    } catch (e) {
+      console.warn('Web Worker no disponible, procesando en main thread', e);
+      processBufferInMain(buffer, filename);
+      return;
+    }
+
+    const startTime = performance.now();
+    let totalRows = 0;
+    let processedRows = 0;
+    const aggregates = initAggregates();
+    let detectedMap = null;
+    let detectedLog = null;
+    let headers = null;
+    const rawSample = [];
+
+    let finished = false;
+    function finalizeOnce() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(watchdog);
+      try {
+        finalizeLoad({ aggregates, rawSample, headers, detectedLog, filename, totalRows });
+      } catch (err) {
+        console.error('Error en finalizeLoad:', err);
+        hideProgress();
+        uploaderBox.classList.remove('loading');
+        showUploadError('Error al finalizar', String(err.message || err));
+      }
+      try { worker.terminate(); } catch (e) {}
+    }
+
+    const watchdog = setTimeout(() => {
+      if (finished) return;
+      console.warn('Watchdog: el worker no terminó en 45s, cambio a main thread');
+      try { worker.terminate(); } catch (e) {}
+      processBufferInMain(buffer, filename);
+    }, 45000);
+
+    worker.onmessage = (e) => {
+      const msg = e.data;
+
+      if (msg.type === 'meta') {
+        headers = msg.headers;
+        totalRows = msg.totalRows;
+        const det = detectColumns(headers);
+        detectedMap = det.map;
+        detectedLog = det.log;
+        showProgress('Procesando filas…', 1,
+          `${totalRows.toLocaleString('es-CO')} filas · ${headers.length} columnas`);
+        return;
+      }
+
+      if (msg.type === 'chunk') {
+        const rows = msg.rows;
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          accumulateRow(aggregates, r, detectedMap);
+          if (rawSample.length < STORAGE_LIMITS.MAX_CSV_ROWS_KEPT) rawSample.push(r);
+        }
+        processedRows = msg.processed;
+        const pct = totalRows ? (processedRows / totalRows * 100) : 100;
+        const elapsed = (performance.now() - startTime) / 1000;
+        const rate = processedRows / Math.max(0.001, elapsed);
+        const remain = (totalRows - processedRows) / Math.max(1, rate);
+        showProgress('Procesando filas…', pct,
+          `${processedRows.toLocaleString('es-CO')} / ${totalRows.toLocaleString('es-CO')} · ETA ${remain.toFixed(0)}s`);
+        return;
+      }
+
+      if (msg.type === 'done') {
+        finalizeOnce();
+        return;
+      }
+
+      if (msg.type === 'error') {
+        console.warn('Worker reportó error:', msg.error);
+        clearTimeout(watchdog);
+        try { worker.terminate(); } catch (e) {}
+        processBufferInMain(buffer, filename);
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.warn('Worker onerror:', err);
+      clearTimeout(watchdog);
+      try { worker.terminate(); } catch (e) {}
+      processBufferInMain(buffer, filename);
+    };
+
+    worker.postMessage({ fileBuffer: buffer, chunkSize: STORAGE_LIMITS.BATCH_SIZE });
+  }
+
+  function processBufferInMain(buffer, filename) {
+    showProgress('Procesando (modo compatibilidad)…', 5, 'Puede tardar varios minutos');
+    setTimeout(() => {
+      try {
+        const data = new Uint8Array(buffer);
+        const wb = XLSX.read(data, { type: 'array' });
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const range = XLSX.utils.decode_range(sheet['!ref']);
+        const nRows = range.e.r - range.s.r + 1;
+        const nCols = range.e.c - range.s.c + 1;
+
+        const headers = [];
+        for (let c = 0; c < nCols; c++) {
+          const cell = sheet[XLSX.utils.encode_cell({ r: range.s.r, c: range.s.c + c })];
+          headers.push(cell ? String(cell.v).trim() : ('COL_' + c));
+        }
+        const det = detectColumns(headers);
+        const aggregates = initAggregates();
+        const rawSample = [];
+        const totalRows = nRows - 1;
+
+        for (let r = range.s.r + 1; r <= range.e.r; r++) {
+          const row = {};
+          for (let c = 0; c < nCols; c++) {
+            const cell = sheet[XLSX.utils.encode_cell({ r, c: range.s.c + c })];
+            row[headers[c]] = cell ? cell.v : null;
+          }
+          accumulateRow(aggregates, row, det.map);
+          if (rawSample.length < STORAGE_LIMITS.MAX_CSV_ROWS_KEPT) rawSample.push(row);
+          const processed = r - range.s.r;
+          if (processed % 5000 === 0) {
+            showProgress('Procesando (main thread)…', processed / totalRows * 100,
+              `${processed.toLocaleString('es-CO')} / ${totalRows.toLocaleString('es-CO')}`);
+          }
+        }
+
+        finalizeLoad({ aggregates, rawSample, headers, detectedLog: det.log, filename, totalRows });
+      } catch (err) {
+        console.error(err);
+        uploaderBox.classList.remove('loading');
+        hideProgress();
+        showUploadError('Error procesando', String(err.message || err));
+      }
+    }, 50);
+  }
+
+  function finalizeLoad({ aggregates, rawSample, headers, detectedLog, filename, totalRows }) {
+    state.aggregates = aggregates;
+    state.rawSample = rawSample;
+    state.rawSampleTotal = totalRows;
+    state.columns = headers;
+    state.filename = filename;
+    state.loadedAt = new Date();
+    state.totalRows = totalRows;
+    state.truncated = totalRows > rawSample.length;
+
+    populateFiltersFromAgg(aggregates);
+    renderAll();
+
+    uploaderLabel.textContent = 'Archivo cargado';
+    uploaderFile.textContent = filename + (state.truncated ? ` (muestra ${rawSample.length.toLocaleString('es-CO')})` : '');
+    uploaderBox.classList.remove('loading');
+    uploaderBox.classList.add('ready');
+    emptyState.style.display = 'none';
+    content.style.display = 'block';
+    content.classList.add('enter');
+    btnCsv.disabled = !rawSample.length;
+    btnClearStorage.disabled = false;
+    setStamp(state.loadedAt);
+    hideProgress();
+
+    const detectedList = detectedLog ? detectedLog.map(l => `${l.field}→"${l.col}"`).join(' · ') : '';
+    colNote.textContent = detectedList || 'Columnas detectadas automáticamente';
+    footNote.textContent = `${filename} · ${totalRows.toLocaleString('es-CO')} registros analizados` +
+      (state.truncated ? ` · CSV limitado a ${rawSample.length.toLocaleString('es-CO')} filas` : '');
+
+    updateCsvSub();
+    saveStateToIDB();
+    showToast(`💾 ${totalRows.toLocaleString('es-CO')} registros procesados`);
+  }
+
+  /* =========================================================
+     RESTAURAR AL CARGAR
+     ========================================================= */
+  window.addEventListener('load', async () => {
+    if (!libsReady()) {
+      showUploadError('No se pudieron cargar las librerías', 'Verifica conexión y recarga.');
+      return;
+    }
+    loadCfg();
+    applyCfgToUI();
+
+    const saved = await loadStateFromIDB();
+    if (saved) {
+      state.aggregates = saved.aggregates;
+      state.rawSample = saved.rawSample || [];
+      state.rawSampleTotal = saved.rawSampleTotal || 0;
+      state.columns = saved.columns || [];
+      state.filename = saved.filename || '';
+      state.loadedAt = saved.loadedAt;
+      state.totalRows = saved.totalRows || 0;
+      state.truncated = !!saved.truncated;
+
+      populateFiltersFromAgg(state.aggregates);
+      renderAll();
+
+      uploaderLabel.textContent = 'Archivo cargado (restaurado)';
+      uploaderFile.textContent = state.filename + (state.truncated ? ` (muestra ${state.rawSample.length.toLocaleString('es-CO')})` : '');
+      uploaderBox.classList.add('ready');
+      emptyState.style.display = 'none';
+      content.style.display = 'block';
+      content.classList.add('enter');
+      btnCsv.disabled = !state.rawSample.length;
+      btnClearStorage.disabled = false;
+      setStamp(state.loadedAt);
+      footNote.textContent = `${state.filename} · ${state.totalRows.toLocaleString('es-CO')} registros (restaurados)`;
+      updateCsvSub();
+      showToast('📂 Datos restaurados desde tu navegador');
+    }
+  });
+
+  /* =========================================================
+     POBLAR FILTROS
+     ========================================================= */
+  function uniqueSortedFromObj(obj) {
+    return Object.keys(obj).filter(x => x && x !== '').sort((a,b) => a.localeCompare(b, 'es'));
+  }
+  function populateFiltersFromAgg(agg) {
+    fillSelect(fSucursal, uniqueSortedFromObj(agg.uniqSucursal));
+    fillSelect(fTercero,  uniqueSortedFromObj(agg.uniqTercero));
+    const mesOrder = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const meses = uniqueSortedFromObj(agg.uniqMes);
+    meses.sort((a,b) => {
+      const ia = mesOrder.indexOf(a), ib = mesOrder.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b, 'es');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    fillSelect(fMes, meses);
+    fillSelect(fCausa, uniqueSortedFromObj(agg.uniqCausa));
+  }
+  function fillSelect(sel, values) {
+    const current = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    values.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+  }
+
+  /* =========================================================
+     FILTRAR DATOS
+     ========================================================= */
+  function getFilteredData() {
+    const vSuc = fSucursal.value;
+    const vMes = fMes.value;
+    const vTer = fTercero.value;
+    const vCau = fCausa.value;
+    const vTip = fTipo.value;
+    if (!vSuc && !vMes && !vTer && !vCau && !vTip) return state.aggregates;
+
+    if (state.rawSample && state.rawSample.length) {
+      return recomputeAggregatesFromSample(vSuc, vMes, vTer, vCau, vTip);
+    }
+    return filterAggregates(state.aggregates, vSuc, vMes, vTer, vCau, vTip);
+  }
+
+  function recomputeAggregatesFromSample(vSuc, vMes, vTer, vCau, vTip) {
+    const agg = initAggregates();
+    const map = state.columns ? detectColumns(state.columns).map : {};
+    for (let i = 0; i < state.rawSample.length; i++) {
+      const r = state.rawSample[i];
+      const suc = map.sucursal ? String(r[map.sucursal] || 'Sin sucursal').trim() : 'Sin sucursal';
+      const mes = map.mes ? String(r[map.mes] || 'Sin mes').trim() : 'Sin mes';
+      const ter = map.tercero ? String(r[map.tercero] || 'Sin tercero').trim() : 'Sin tercero';
+      const obs = map.observaciones ? String(r[map.observaciones] || '').trim() : '';
+      const isIssue = obs && !/^\s*para facturar/i.test(obs);
+      const tipoKey = isIssue ? 'issue' : (!obs ? 'sinobs' : 'normal');
+      if (vSuc && suc !== vSuc) continue;
+      if (vMes && mes !== vMes) continue;
+      if (vTer && ter !== vTer) continue;
+      if (vCau && obs !== vCau) continue;
+      if (vTip && tipoKey !== vTip) continue;
+      accumulateRow(agg, r, map);
+    }
+    return agg;
+  }
+
+  function filterAggregates(agg, vSuc, vMes, vTer, vCau, vTip) {
+    const clone = JSON.parse(JSON.stringify(agg));
+    if (vSuc && agg.bySucursal[vSuc]) {
+      clone.totalValor = agg.bySucursal[vSuc].normal + agg.bySucursal[vSuc].issue;
+      clone.totalCasos = agg.bySucursal[vSuc].normalCasos + agg.bySucursal[vSuc].issueCasos;
+      clone.issueValor = agg.bySucursal[vSuc].issue;
+      clone.issueCasos = agg.bySucursal[vSuc].issueCasos;
+    } else if (vMes && agg.byMes[vMes]) {
+      clone.totalValor = agg.byMes[vMes].normal + agg.byMes[vMes].issue;
+      clone.totalCasos = agg.byMes[vMes].normalCasos + agg.byMes[vMes].issueCasos;
+      clone.issueValor = agg.byMes[vMes].issue;
+      clone.issueCasos = agg.byMes[vMes].issueCasos;
+    } else if (vTer && agg.byTercero[vTer]) {
+      clone.totalValor = agg.byTercero[vTer].normal + agg.byTercero[vTer].issue;
+      clone.totalCasos = agg.byTercero[vTer].normalCasos + agg.byTercero[vTer].issueCasos;
+    }
+    return clone;
+  }
+
+  /* =========================================================
+     RENDER GLOBAL
+     ========================================================= */
+  function renderAll() {
+    const agg = getFilteredData();
+    renderFilterSummary();
+    updateCsvSub();
+    renderKPIs(agg);
+    renderMainChart(agg);
+    renderCausasChart(agg);
+    renderTerceroChart(agg);
+    renderMesChart(agg);
+    renderTable(agg);
+  }
+
+  function renderKPIs(agg) {
+    const totalValor = agg.totalValor || 0;
+    const totalCasos = agg.totalCasos || 0;
+    const issueValor = agg.issueValor || 0;
+    const issueCasos = agg.issueCasos || 0;
+    const issuePct = totalValor ? (issueValor / totalValor * 100) : 0;
+
+    document.getElementById('kpiRow').innerHTML = `
+      <div class="kpi">
+        <div class="kpi-label">Valor total pendiente</div>
+        <div class="kpi-value">${fmtCompactCOP(totalValor)}</div>
+        <div class="kpi-sub">${fmtCOP(totalValor)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Registros pendientes</div>
+        <div class="kpi-value">${totalCasos.toLocaleString('es-CO')}</div>
+        <div class="kpi-sub">ítems en el corte filtrado</div>
+      </div>
+      <div class="kpi warn">
+        <div class="kpi-label">Con causa de admisión / error</div>
+        <div class="kpi-value">${issueCasos.toLocaleString('es-CO')}</div>
+        <div class="kpi-sub">${fmtCompactCOP(issueValor)} en valor</div>
+      </div>
+      <div class="kpi warn">
+        <div class="kpi-label">% del valor por causas atípicas</div>
+        <div class="kpi-value">${issuePct.toFixed(1)}%</div>
+        <div class="kpi-sub">del total filtrado</div>
+      </div>
+    `;
+  }
+
+  function getGroupForDimension(agg, dim) {
+    if (dim === 'sucursal') return agg.bySucursal;
+    if (dim === 'mes') return agg.byMes;
+    if (dim === 'tercero') return agg.byTercero;
+    if (dim === 'obs') return agg.byObs;
+    if (dim === 'tipo') return agg.byTipo;
+    return agg.bySucursal;
+  }
+  function dimLabel(dim) {
+    return { sucursal: 'sucursal', mes: 'mes', tercero: 'tercero', obs: 'causa / observación', tipo: 'tipo de caso' }[dim] || dim;
+  }
+
+  function renderMainChart(agg) {
+    const dim = cfg.dimension;
+    const group = getGroupForDimension(agg, dim) || {};
+    const metricIsMoney = cfg.metric === 'valor';
+
+    let entries = Object.entries(group).map(([k, g]) => ({
+      k,
+      normal: metricIsMoney ? g.normal : g.normalCasos,
+      issue: metricIsMoney ? g.issue : g.issueCasos,
+      total: metricIsMoney ? (g.normal + g.issue) : (g.normalCasos + g.issueCasos)
+    }));
+    entries.sort((a, b) => b.total - a.total);
+
+    if (cfg.topN !== 'all') {
+      const n = parseInt(cfg.topN, 10) || 10;
+      entries = entries.slice(0, n);
+    }
+
+    const labels = entries.map(e => e.k);
+    const dataNormal = entries.map(e => e.normal);
+    const dataIssue  = entries.map(e => e.issue);
+    const divideNormalIssue = (dim === 'sucursal' || dim === 'obs' || dim === 'tipo');
+
+    const metricLbl = metricIsMoney ? 'Valor pendiente' : 'Casos';
+    mainChartTitle.textContent = `${metricLbl} por ${dimLabel(dim)}`;
+    mainChartNote.textContent = cfg.topN === 'all'
+      ? `Mostrando todos los grupos (${labels.length}).`
+      : `Top ${cfg.topN} grupos por ${metricIsMoney ? 'valor' : 'casos'}.`;
+
+    mainLegendRow.innerHTML = divideNormalIssue
+      ? `<div class="legend-item"><span class="legend-swatch" style="background:var(--teal)"></span>Flujo normal</div>
+         <div class="legend-item"><span class="legend-swatch" style="background:var(--coral)"></span>Admisión / error</div>`
+      : `<div class="legend-item"><span class="legend-swatch" style="background:var(--teal)"></span>${escapeHtml(metricLbl)}</div>`;
+
+    let type = 'bar';
+    if (cfg.chart === 'doughnut') type = 'doughnut';
+
+    let datasets;
+    if (type === 'doughnut') {
+      datasets = [{
+        data: entries.map(e => e.total),
+        backgroundColor: entries.map((_, i) => PALETTE[i % PALETTE.length]),
+        borderWidth: 0
+      }];
+    } else if (cfg.chart === 'barStacked') {
+      datasets = [
+        { label: 'Flujo normal', data: dataNormal, backgroundColor: COLORS.teal, borderRadius: 3, stack: 's' },
+        { label: 'Admisión / error', data: dataIssue, backgroundColor: COLORS.coral, borderRadius: 3, stack: 's' }
+      ];
+    } else {
+      datasets = [{
+        label: metricLbl,
+        data: entries.map(e => e.total),
+        backgroundColor: entries.map(e => e.issue > e.normal ? COLORS.coral : COLORS.teal),
+        borderRadius: 3
+      }];
+    }
+
+    const horizontal = cfg.horizontal && type === 'bar';
+    const stacked = cfg.chart === 'barStacked';
+
+    renderChart('chartMain', type, { labels, datasets }, {
+      money: metricIsMoney,
+      indexAxis: horizontal ? 'y' : 'x',
+      stacked: stacked,
+      datalabels: cfg.labels !== false
+    });
+  }
+
+  function toSortedArray(obj, limit) {
+    let arr = Object.entries(obj).map(([k, g]) => ({
+      k, normal: g.normal, issue: g.issue, total: g.normal + g.issue,
+      normalCasos: g.normalCasos, issueCasos: g.issueCasos, totalCasos: g.normalCasos + g.issueCasos
+    }));
+    arr.sort((a, b) => b.total - a.total);
+    if (limit) arr = arr.slice(0, limit);
+    return arr;
+  }
+
+  function renderCausasChart(agg) {
+    const arr = toSortedArray(agg.byObs, 8);
+    renderChart('chartCausas', 'bar', {
+      labels: arr.map(e => e.k.length > 30 ? e.k.slice(0, 28)+'…' : e.k),
+      datasets: [{
+        data: arr.map(e => e.total),
+        backgroundColor: arr.map(e => isNormalCause(e.k) ? COLORS.teal : COLORS.coral),
+        borderRadius: 3
+      }]
+    }, { indexAxis: 'y', money: true, legend: false, datalabels: cfg.labels !== false });
+  }
+
+  function renderTerceroChart(agg) {
+    const arr = toSortedArray(agg.byTercero, 7);
+    renderChart('chartTercero', 'doughnut', {
+      labels: arr.map(e => e.k),
+      datasets: [{ data: arr.map(e => e.total), backgroundColor: PALETTE, borderWidth: 0 }]
+    }, { money: true, datalabels: cfg.labels !== false, doughnut: true });
+  }
+
+  function renderMesChart(agg) {
+    const mesOrder = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const arr = Object.entries(agg.byMes).map(([k, g]) => ({ k, total: g.normal + g.issue }));
+    arr.sort((a, b) => {
+      const ia = mesOrder.indexOf(a.k), ib = mesOrder.indexOf(b.k);
+      if (ia === -1 && ib === -1) return a.k.localeCompare(b.k, 'es');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    renderChart('chartMes', 'bar', {
+      labels: arr.map(e => e.k),
+      datasets: [{ data: arr.map(e => e.total), backgroundColor: COLORS.teal, borderRadius: 4 }]
+    }, { money: true, legend: false, datalabels: cfg.labels !== false });
+  }
+
+  function renderTable(agg) {
+    const issues = Object.values(agg.issueTable || {});
+    issues.sort((a, b) => b.valor - a.valor);
+    const top = issues.slice(0, 25);
+    document.getElementById('issueTableBody').innerHTML = top.map(r => `
+      <tr>
+        <td>${escapeHtml(r.sucursal)}</td>
+        <td><span class="cause-tag">${escapeHtml(r.obs)}</span></td>
+        <td>${escapeHtml(r.tercero)}</td>
+        <td class="num">${r.casos.toLocaleString('es-CO')}</td>
+        <td class="num">${fmtCOP(r.valor)}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="5" style="color:var(--ink-soft)">No se encontraron casos con causas atípicas.</td></tr>';
+  }
+
+  /* =========================================================
+     UTILIDADES
+     ========================================================= */
+  function isNormalCause(text) {
+    if (!text) return false;
+    return /^\s*para facturar/i.test(String(text).trim());
+  }
+  function fmtCOP(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+  function fmtCompactCOP(n) {
+    if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'mM';
+    if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k';
+    return '$' + Math.round(n);
+  }
+  function fmtDataLabel(v, money) {
+    if (money) {
+      if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'mM';
+      if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+      if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'k';
+      return '$' + Math.round(v);
+    }
+    return String(v);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function libsReady() { return typeof XLSX !== 'undefined' && typeof Chart !== 'undefined'; }
+  function showUploadError(title, detail) {
+    uploaderLabel.textContent = title;
+    uploaderFile.textContent = detail;
+    uploaderBox.classList.remove('ready', 'loading');
+  }
+
+  function updateCsvSub() {
+    if (!state.rawSample.length) {
+      csvSub.textContent = 'Sin datos cargados';
+      return;
+    }
+    const filtered = applyFiltersToSample(state.rawSample);
+    const n = filtered.length;
+    const total = state.rawSample.length;
+    csvSub.textContent = state.truncated
+      ? `${n.toLocaleString('es-CO')} de ${total.toLocaleString('es-CO')} (muestra)`
+      : `${n.toLocaleString('es-CO')} filas · ${state.columns.length} columnas`;
+  }
+
+  function applyFiltersToSample(sample) {
+    const vSuc = fSucursal.value, vMes = fMes.value, vTer = fTercero.value, vCau = fCausa.value, vTip = fTipo.value;
+    if (!vSuc && !vMes && !vTer && !vCau && !vTip) return sample;
+    const map = state.columns ? detectColumns(state.columns).map : {};
+    return sample.filter(r => {
+      const suc = map.sucursal ? String(r[map.sucursal] || 'Sin sucursal').trim() : 'Sin sucursal';
+      const mes = map.mes ? String(r[map.mes] || 'Sin mes').trim() : 'Sin mes';
+      const ter = map.tercero ? String(r[map.tercero] || 'Sin tercero').trim() : 'Sin tercero';
+      const obs = map.observaciones ? String(r[map.observaciones] || '').trim() : '';
+      const isIssue = obs && !/^\s*para facturar/i.test(obs);
+      const tipoKey = isIssue ? 'issue' : (!obs ? 'sinobs' : 'normal');
+      if (vSuc && suc !== vSuc) return false;
+      if (vMes && mes !== vMes) return false;
+      if (vTer && ter !== vTer) return false;
+      if (vCau && obs !== vCau) return false;
+      if (vTip && tipoKey !== vTip) return false;
+      return true;
+    });
+  }
+
+  /* =========================================================
+     CSV
+     ========================================================= */
+  function csvEscape(v) {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadCsv() {
+    if (!state.rawSample.length) {
+      showToast('No hay filas para exportar');
+      return;
+    }
+    const filtered = applyFiltersToSample(state.rawSample);
+    if (!filtered.length) { showToast('No hay filas con los filtros aplicados'); return; }
+
+    try {
+      const cols = state.columns;
+      const header = cols.map(csvEscape).join(',');
+      const lines = filtered.map(r => cols.map(c => csvEscape(r[c])).join(','));
+      const csv = '\uFEFF' + header + '\n' + lines.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const baseName = (state.filename || 'pendientes').replace(/\.[^.]+$/, '').replace(/[^\w\-]+/g, '_').slice(0, 60) || 'pendientes';
+      const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      const suffix = state.truncated ? '_muestra' : '';
+      const fname = `${baseName}${suffix}_detalle_${ts}.csv`;
+
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, fname);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fname; a.rel = 'noopener';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        document.body.removeChild(a);
+        setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e){} }, 2500);
+      }
+      showToast('✅ Descargando: ' + fname);
+    } catch (err) {
+      console.error('Error CSV:', err);
+      showToast('❌ Error al generar el CSV: ' + (err.message || err));
+    }
+  }
+  btnCsv.addEventListener('click', downloadCsv);
+
+  btnClearStorage.addEventListener('click', async function () {
+    if (!confirm('¿Borrar los datos guardados? El dashboard volverá al estado inicial.')) return;
+    try { await dbClear(); } catch (e) {}
+    state.aggregates = null;
+    state.rawSample = [];
+    state.columns = [];
+    state.filename = '';
+    state.loadedAt = null;
+    state.totalRows = 0;
+    state.truncated = false;
+    uploaderLabel.textContent = 'Ningún archivo cargado';
+    uploaderFile.innerHTML = '&nbsp;';
+    uploaderBox.classList.remove('ready');
+    btnCsv.disabled = true;
+    btnClearStorage.disabled = true;
+    csvSub.textContent = 'Sin datos cargados';
+    setStamp(null);
+    footNote.textContent = '—'; colNote.textContent = '—';
+    content.style.display = 'none';
+    emptyState.style.display = 'block';
+    fileInput.value = '';
+    showToast('🗑️ Datos guardados eliminados');
+  });
+
+  /* =========================================================
+     FILTROS UI
+     ========================================================= */
+  function renderFilterSummary() {
+    const chips = [];
+    const addChip = (label, val, sel) => {
+      if (!val) return;
+      chips.push(`<span class="chip">${escapeHtml(label)}: ${escapeHtml(val)} <button type="button" data-clear="${sel}">×</button></span>`);
+    };
+    addChip('Sucursal', fSucursal.value, 'fSucursal');
+    addChip('Mes', fMes.value, 'fMes');
+    addChip('Tercero', fTercero.value, 'fTercero');
+    addChip('Causa', fCausa.value, 'fCausa');
+    if (fTipo.value) {
+      const lbl = fTipo.options[fTipo.selectedIndex].textContent;
+      addChip('Tipo', lbl, 'fTipo');
+    }
+    filtersSummary.innerHTML = chips.length ? chips.join('') :
+      '<span style="opacity:.6">Sin filtros aplicados · mostrando todos los registros</span>';
+    filtersSummary.querySelectorAll('button[data-clear]').forEach(b => {
+      b.addEventListener('click', () => {
+        document.getElementById(b.getAttribute('data-clear')).value = '';
+        renderAll();
+      });
+    });
+  }
+  [fSucursal, fMes, fTercero, fCausa, fTipo].forEach(sel => {
+    sel.addEventListener('change', () => { renderAll(); });
+  });
+  btnClear.addEventListener('click', () => {
+    fSucursal.value = ''; fMes.value = ''; fTercero.value = ''; fCausa.value = ''; fTipo.value = '';
+    renderAll();
+  });
+
+  /* =========================================================
+     CFG DEL ANALISTA
+     ========================================================= */
+  const CFG_KEY = 'keralty_pendientes_cfg_v2';
+  function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
+  function loadCfg() {
+    try {
+      const json = localStorage.getItem(CFG_KEY);
+      if (!json) return;
+      Object.assign(cfg, DEFAULT_CFG, JSON.parse(json));
+    } catch (e) {}
+  }
+  function setActive(seg, val) {
+    seg.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-val') === val);
+    });
+  }
+  function applyCfgToUI() {
+    setActive(segDimension, cfg.dimension);
+    setActive(segMetric, cfg.metric);
+    setActive(segChart, cfg.chart);
+    setActive(segTopN, cfg.topN);
+    swLabels.checked = !!cfg.labels;
+    swHorizontal.checked = !!cfg.horizontal;
+  }
+  function bindSeg(seg, key) {
+    seg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-val]');
+      if (!btn) return;
+      cfg[key] = btn.getAttribute('data-val');
+      setActive(seg, cfg[key]);
+      saveCfg();
+      renderAll();
+    });
+  }
+  bindSeg(segDimension, 'dimension');
+  bindSeg(segMetric, 'metric');
+  bindSeg(segChart, 'chart');
+  bindSeg(segTopN, 'topN');
+  swLabels.addEventListener('change', () => { cfg.labels = swLabels.checked; saveCfg(); renderAll(); });
+  swHorizontal.addEventListener('change', () => { cfg.horizontal = swHorizontal.checked; saveCfg(); renderAll(); });
+  btnResetAnalyst.addEventListener('click', () => {
+    Object.assign(cfg, DEFAULT_CFG);
+    applyCfgToUI();
+    saveCfg();
+    renderAll();
+    showToast('↺ Vista restaurada por defecto');
+  });
+
+  /* =========================================================
+     RENDER DE GRÁFICAS
+     ========================================================= */
+  function renderChart(id, type, data, opts) {
+    if (typeof Chart === 'undefined') throw new Error('Chart.js no cargó.');
+    opts = opts || {};
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (charts[id]) charts[id].destroy();
+
+    const money = !!opts.money;
+    const isDoughnut = type === 'doughnut';
+    const horizontal = opts.indexAxis === 'y';
+    const datalabelsOn = opts.datalabels !== false;
+
+    let maxLabelLen = 0;
+    data.datasets.forEach(ds => {
+      ds.data.forEach(v => {
+        const txt = isDoughnut ? fmtDataLabel(v, money) + ' 100%' : fmtDataLabel(Math.abs(v), money);
+        if (txt.length > maxLabelLen) maxLabelLen = txt.length;
+      });
+    });
+    const rightPad = horizontal ? Math.min(160, Math.max(60, maxLabelLen * 8 + 24)) : 0;
+    const topPad = !horizontal && !isDoughnut ? 38 : 0;
+
+    // Registro defensivo del plugin (solo si existe)
+    if (typeof ChartDataLabels !== 'undefined') {
+      try {
+        if (!Chart.registry.plugins.get('datalabels')) {
+          Chart.register(ChartDataLabels);
+        }
+      } catch (e) {
+        console.warn('No se pudo registrar ChartDataLabels:', e);
+      }
+    } else {
+      console.warn('ChartDataLabels no está cargado. Se mostrarán las gráficas sin etiquetas.');
+    }
+
+    const datasetColors = data.datasets.map((ds, i) => {
+      if (data.datasets.length > 1) return i === 0 ? COLORS.teal : COLORS.coral;
+      return COLORS.teal;
+    });
+
+    // Si el plugin no está disponible, no referenciamos `datalabels` en options
+    // para evitar el ReferenceError
+    const datalabelsOptions = (typeof ChartDataLabels !== 'undefined') ? {
+      display: datalabelsOn ? 'auto' : false,
+      anchor: isDoughnut ? 'center' : 'end',
+      align: isDoughnut ? 'center' : (horizontal ? 'right' : 'top'),
+      offset: isDoughnut ? 0 : 6,
+      clip: false,
+      clamp: true,
+      color: (c) => {
+        if (isDoughnut) return '#fff';
+        const dsIdx = c.datasetIndex;
+        return datasetColors[dsIdx] || COLORS.ink;
+      },
+      backgroundColor: (c) => {
+        if (isDoughnut) return 'transparent';
+        const dsIdx = c.datasetIndex;
+        return dsIdx === 1 ? 'rgba(180,72,58,0.14)' : 'rgba(22,84,76,0.10)';
+      },
+      borderColor: (c) => {
+        if (isDoughnut) return 'transparent';
+        const dsIdx = c.datasetIndex;
+        return dsIdx === 1 ? 'rgba(180,72,58,0.35)' : 'rgba(22,84,76,0.28)';
+      },
+      borderWidth: 1,
+      borderRadius: 6,
+      padding: isDoughnut ? 0 : { top: 3, bottom: 3, left: 7, right: 7 },
+      font: { family: 'IBM Plex Mono', size: isDoughnut ? 11 : 11.5, weight: '600' },
+      textAlign: 'center',
+      formatter: (value, c) => {
+        const max = Math.max(...c.dataset.data.map(Math.abs));
+        if (max > 0 && Math.abs(value) / max < 0.005) return '';
+        if (isDoughnut) {
+          const total = c.dataset.data.reduce((a, b) => a + b, 0);
+          const pct = total ? (value / total * 100) : 0;
+          if (pct < 3) return '';
+          return fmtDataLabel(value, money) + '\n' + pct.toFixed(0) + '%';
+        }
+        return fmtDataLabel(value, money);
+      }
+    } : { display: false };
+
+    const config = {
+      type: type,
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: isDoughnut
+            ? { top: 10, bottom: 10, left: 10, right: 10 }
+            : { top: topPad, right: rightPad, bottom: 10, left: 8 }
+        },
+        indexAxis: opts.indexAxis || 'x',
+        ...(horizontal && !isDoughnut ? { barPercentage: 0.82, categoryPercentage: 0.78 } : {}),
+        plugins: {
+          legend: {
+            display: isDoughnut || (data.datasets && data.datasets.length > 1),
+            position: isDoughnut ? 'right' : 'top',
+            labels: {
+              color: COLORS.inkSoft,
+              font: { family: 'IBM Plex Sans', size: 12, weight: '500' },
+              boxWidth: 12, boxHeight: 12, padding: 14,
+              usePointStyle: true, pointStyle: 'rectRounded'
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(27,46,43,0.95)',
+            titleFont: { family: 'IBM Plex Sans', size: 12.5, weight: '600' },
+            bodyFont: { family: 'IBM Plex Mono', size: 12 },
+            padding: 10,
+            cornerRadius: 6,
+            displayColors: data.datasets.length > 1,
+            callbacks: {
+              label: function (ctx) {
+                if (isDoughnut) {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = total ? (ctx.parsed / total * 100) : 0;
+                  return ' ' + ctx.label + ': ' + fmtDataLabel(ctx.parsed, money) + ' (' + pct.toFixed(1) + '%)';
+                }
+                const val = ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed.x;
+                const prefix = ctx.dataset.label ? ctx.dataset.label + ': ' : '';
+                return ' ' + prefix + fmtDataLabel(val, money);
+              }
+            }
+          },
+          datalabels: datalabelsOptions
+        },
+        scales: isDoughnut ? {} : {
+          x: {
+            beginAtZero: true,
+            stacked: !!opts.stacked,
+            grid: { color: horizontal ? COLORS.line : 'transparent', drawBorder: false },
+            ticks: {
+              color: COLORS.inkSoft,
+              font: { family: 'IBM Plex Mono', size: 11 },
+              callback: horizontal ? (v) => fmtDataLabel(v, money) : undefined,
+              maxRotation: horizontal ? 0 : 40,
+              minRotation: 0,
+              autoSkip: true
+            }
+          },
+          y: {
+            beginAtZero: true,
+            stacked: !!opts.stacked,
+            grid: { color: horizontal ? 'transparent' : COLORS.line, drawBorder: false },
+            ticks: {
+              color: COLORS.inkSoft,
+              font: { family: 'IBM Plex Sans', size: 12 },
+              callback: !horizontal ? (v) => fmtDataLabel(v, money) : undefined
+            }
+          }
+        },
+        animation: { duration: 550, easing: 'easeOutQuart' }
+      }
+    };
+
+    if (isDoughnut) {
+      config.options.cutout = '62%';
+    }
+
+    charts[id] = new Chart(ctx, config);
+  }
+
+})();
+</script>
+</body>
+</html>
