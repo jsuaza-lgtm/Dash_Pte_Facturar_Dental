@@ -330,6 +330,57 @@
   }
   .filters-summary .chip button:hover { opacity: 1; }
 
+  /* --- Multi-select (filtros con varios valores) --- */
+  .msel { position: relative; }
+  .msel-btn {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--bg-panel);
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 8px 30px 8px 10px; cursor: pointer; width: 100%;
+    text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    transition: border-color 0.15s ease;
+  }
+  .msel-btn span.txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msel-btn svg { flex: 0 0 auto; transition: transform 0.15s ease; }
+  .msel.open .msel-btn svg { transform: rotate(180deg); }
+  .msel-btn:hover { border-color: var(--teal); }
+  .msel.has-value .msel-btn { border-color: var(--teal); color: var(--teal); }
+  .msel-count {
+    background: var(--teal); color: #fff; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; font-weight: 600; border-radius: 20px; padding: 1px 6px; flex: 0 0 auto;
+  }
+  .msel-panel {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 40;
+    width: max(100%, 220px); max-width: 320px; background: var(--bg-panel);
+    border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow-md);
+    padding: 8px; overflow: hidden;
+  }
+  .msel.open .msel-panel { display: block; }
+  .msel-search {
+    width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px;
+    padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg-soft); color: var(--ink); margin-bottom: 6px;
+  }
+  .msel-search:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .msel-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; }
+  .msel-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 6px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--ink);
+  }
+  .msel-item:hover { background: var(--bg-soft); }
+  .msel-item input { accent-color: var(--teal); cursor: pointer; flex: 0 0 auto; }
+  .msel-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msel-empty { padding: 10px 6px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
+  .msel-foot {
+    display: flex; justify-content: space-between; gap: 6px; margin-top: 6px;
+    padding-top: 6px; border-top: 1px solid var(--line);
+  }
+  .msel-foot button {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 11.5px; font-weight: 600;
+    color: var(--teal); background: none; border: none; cursor: pointer; padding: 4px 6px;
+  }
+  .msel-foot button:hover { text-decoration: underline; }
+
   .analyst-panel {
     background: var(--bg-panel);
     border: 1px solid var(--line);
@@ -635,29 +686,89 @@
 
     <div class="filters-bar" id="filtersBar">
       <div class="filter-field">
-        <label for="fSucursal">Sucursal</label>
-        <select id="fSucursal"><option value="">Todas</option></select>
+        <label>Sucursal</label>
+        <div class="msel" id="fSucursal">
+          <button type="button" class="msel-btn">
+            <span class="txt">Todas</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="msel-panel">
+            <input type="text" class="msel-search" placeholder="Buscar...">
+            <div class="msel-list"></div>
+            <div class="msel-foot">
+              <button type="button" data-act="all">Todas</button>
+              <button type="button" data-act="none">Limpiar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="filter-field">
-        <label for="fMes">Mes</label>
-        <select id="fMes"><option value="">Todos</option></select>
+        <label>Mes</label>
+        <div class="msel" id="fMes">
+          <button type="button" class="msel-btn">
+            <span class="txt">Todos</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="msel-panel">
+            <input type="text" class="msel-search" placeholder="Buscar...">
+            <div class="msel-list"></div>
+            <div class="msel-foot">
+              <button type="button" data-act="all">Todas</button>
+              <button type="button" data-act="none">Limpiar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="filter-field">
-        <label for="fTercero">Tercero</label>
-        <select id="fTercero"><option value="">Todos</option></select>
+        <label>Tercero</label>
+        <div class="msel" id="fTercero">
+          <button type="button" class="msel-btn">
+            <span class="txt">Todos</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="msel-panel">
+            <input type="text" class="msel-search" placeholder="Buscar...">
+            <div class="msel-list"></div>
+            <div class="msel-foot">
+              <button type="button" data-act="all">Todas</button>
+              <button type="button" data-act="none">Limpiar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="filter-field">
-        <label for="fCausa">Causa / Observación</label>
-        <select id="fCausa"><option value="">Todas</option></select>
+        <label>Causa / Observación</label>
+        <div class="msel" id="fCausa">
+          <button type="button" class="msel-btn">
+            <span class="txt">Todas</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="msel-panel">
+            <input type="text" class="msel-search" placeholder="Buscar...">
+            <div class="msel-list"></div>
+            <div class="msel-foot">
+              <button type="button" data-act="all">Todas</button>
+              <button type="button" data-act="none">Limpiar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="filter-field">
-        <label for="fTipo">Tipo de caso</label>
-        <select id="fTipo">
-          <option value="">Todos</option>
-          <option value="normal">Flujo normal</option>
-          <option value="issue">Con causa / error</option>
-          <option value="sinobs">Sin observación</option>
-        </select>
+        <label>Tipo de caso</label>
+        <div class="msel" id="fTipo">
+          <button type="button" class="msel-btn">
+            <span class="txt">Todos</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="msel-panel">
+            <input type="text" class="msel-search" placeholder="Buscar...">
+            <div class="msel-list"></div>
+            <div class="msel-foot">
+              <button type="button" data-act="all">Todas</button>
+              <button type="button" data-act="none">Limpiar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="filters-actions">
         <button class="btn-filter" id="btnClear" type="button">Limpiar filtros</button>
@@ -952,11 +1063,6 @@ self.onmessage = function (e) {
   const progressFill   = document.getElementById('progressFill');
   const progressNote   = document.getElementById('progressNote');
 
-  const fSucursal = document.getElementById('fSucursal');
-  const fMes      = document.getElementById('fMes');
-  const fTercero  = document.getElementById('fTercero');
-  const fCausa    = document.getElementById('fCausa');
-  const fTipo     = document.getElementById('fTipo');
   const btnClear  = document.getElementById('btnClear');
   const filtersSummary = document.getElementById('filtersSummary');
 
@@ -1464,14 +1570,122 @@ self.onmessage = function (e) {
   });
 
   /* =========================================================
+     MULTI-SELECT (filtros: seleccionar uno o varios)
+     ========================================================= */
+  function createMultiSelect(id) {
+    const root = document.getElementById(id);
+    const btn = root.querySelector('.msel-btn');
+    const btnText = root.querySelector('.msel-btn .txt');
+    const search = root.querySelector('.msel-search');
+    const list = root.querySelector('.msel-list');
+    const placeholder = btnText.textContent;
+    let options = []; // [{value, label}]
+    let selected = new Set();
+    let onChangeCb = null;
+
+    function renderList() {
+      const q = search.value.trim().toLowerCase();
+      const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
+      list.innerHTML = filtered.length ? filtered.map(o => `
+        <label class="msel-item">
+          <input type="checkbox" value="${escapeHtml(o.value)}" ${selected.has(o.value) ? 'checked' : ''}>
+          <span>${escapeHtml(o.label)}</span>
+        </label>`).join('') : '<div class="msel-empty">Sin resultados</div>';
+    }
+    function renderBtn() {
+      if (!selected.size) {
+        btnText.textContent = placeholder;
+      } else if (selected.size === 1) {
+        const only = [...selected][0];
+        const o = options.find(x => x.value === only);
+        btnText.textContent = o ? o.label : only;
+      } else {
+        btnText.textContent = selected.size + ' seleccionadas';
+      }
+      root.classList.toggle('has-value', !!selected.size);
+    }
+    function openPanel() {
+      document.querySelectorAll('.msel.open').forEach(m => { if (m !== root) m.classList.remove('open'); });
+      root.classList.add('open');
+      search.value = '';
+      renderList();
+      search.focus();
+    }
+    function closePanel() { root.classList.remove('open'); }
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      root.classList.contains('open') ? closePanel() : openPanel();
+    });
+    search.addEventListener('input', renderList);
+    search.addEventListener('click', (e) => e.stopPropagation());
+    list.addEventListener('change', (e) => {
+      const cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      if (cb.checked) selected.add(cb.value); else selected.delete(cb.value);
+      renderBtn();
+      if (onChangeCb) onChangeCb();
+    });
+    const btnAll = root.querySelector('[data-act="all"]');
+    const btnNone = root.querySelector('[data-act="none"]');
+    if (btnAll) btnAll.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selected = new Set(options.map(o => o.value));
+      renderList(); renderBtn();
+      if (onChangeCb) onChangeCb();
+    });
+    if (btnNone) btnNone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selected.clear();
+      renderList(); renderBtn();
+      if (onChangeCb) onChangeCb();
+    });
+
+    return {
+      setOptions(vals) {
+        options = vals;
+        const valid = new Set(vals.map(o => o.value));
+        selected = new Set([...selected].filter(v => valid.has(v)));
+        renderBtn();
+        if (root.classList.contains('open')) renderList();
+      },
+      getSelected() { return [...selected]; },
+      setSelected(vals) {
+        const valid = new Set(options.map(o => o.value));
+        selected = new Set(vals.filter(v => valid.has(v)));
+        renderBtn();
+      },
+      clear() { selected.clear(); renderBtn(); },
+      onChange(cb) { onChangeCb = cb; }
+    };
+  }
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.msel.open').forEach(m => { if (!m.contains(e.target)) m.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('.msel.open').forEach(m => m.classList.remove('open'));
+  });
+
+  const msSucursal = createMultiSelect('fSucursal');
+  const msMes      = createMultiSelect('fMes');
+  const msTercero  = createMultiSelect('fTercero');
+  const msCausa    = createMultiSelect('fCausa');
+  const msTipo     = createMultiSelect('fTipo');
+  msTipo.setOptions([
+    { value: 'normal', label: 'Flujo normal' },
+    { value: 'issue',  label: 'Con causa / error' },
+    { value: 'sinobs', label: 'Sin observación' }
+  ]);
+  [msSucursal, msMes, msTercero, msCausa, msTipo].forEach(ms => ms.onChange(() => renderAll()));
+  /* =========================================================
      POBLAR FILTROS
      ========================================================= */
   function uniqueSortedFromObj(obj) {
     return Object.keys(obj).filter(x => x && x !== '').sort((a,b) => a.localeCompare(b, 'es'));
   }
   function populateFiltersFromAgg(agg) {
-    fillSelect(fSucursal, uniqueSortedFromObj(agg.uniqSucursal));
-    fillSelect(fTercero,  uniqueSortedFromObj(agg.uniqTercero));
+    msSucursal.setOptions(uniqueSortedFromObj(agg.uniqSucursal).map(v => ({ value: v, label: v })));
+    msTercero.setOptions(uniqueSortedFromObj(agg.uniqTercero).map(v => ({ value: v, label: v })));
     const mesOrder = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const meses = uniqueSortedFromObj(agg.uniqMes);
     meses.sort((a,b) => {
@@ -1481,18 +1695,8 @@ self.onmessage = function (e) {
       if (ib === -1) return -1;
       return ia - ib;
     });
-    fillSelect(fMes, meses);
-    fillSelect(fCausa, uniqueSortedFromObj(agg.uniqCausa));
-  }
-  function fillSelect(sel, values) {
-    const current = sel.value;
-    while (sel.options.length > 1) sel.remove(1);
-    values.forEach(v => {
-      const o = document.createElement('option');
-      o.value = v; o.textContent = v;
-      sel.appendChild(o);
-    });
-    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+    msMes.setOptions(meses.map(v => ({ value: v, label: v })));
+    msCausa.setOptions(uniqueSortedFromObj(agg.uniqCausa).map(v => ({ value: v, label: v })));
   }
 
   /* =========================================================
